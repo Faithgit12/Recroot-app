@@ -1,17 +1,47 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { styles as globalStyles } from './styles';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+
+type SelectedFile = {
+  name: string;
+  size: number;
+  type: string;
+};
 
 export default function UploadResumeScreen() {
   const router = useRouter();
-  const [fileUploaded, setFileUploaded] = useState(false);
+  const [fileUploaded, setFileUploaded] = useState<SelectedFile | null>(null);
 
-  const handleChooseFile = () => {
-    // In a real app, you would use expo-document-picker here
-    // For this UI mockup, we just toggle the state
-    setFileUploaded(true);
+  const handleChooseFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        
+        // 5MB limit in bytes
+        const MAX_SIZE = 5 * 1024 * 1024;
+        
+        if (file.size && file.size > MAX_SIZE) {
+          Alert.alert("File Too Large", "The selected file exceeds the maximum 5MB limit. Please choose a smaller file.");
+          return;
+        }
+
+        setFileUploaded({
+          name: file.name,
+          size: file.size || 0,
+          type: file.mimeType || 'application/pdf', // fallback if unknown
+        });
+      }
+    } catch (err) {
+      console.error("Error picking document", err);
+      Alert.alert("Error", "There was a problem picking your document.");
+    }
   };
 
   const handleContinue = () => {
@@ -40,15 +70,17 @@ export default function UploadResumeScreen() {
           ) : (
             <View style={styles.fileUploadedContent}>
               <View style={styles.fileInfoRow}>
-                <View style={styles.pdfIcon}>
-                  <Text style={styles.pdfIconText}>PDF</Text>
+                <View style={[styles.pdfIcon, { backgroundColor: fileUploaded.type.includes('word') || fileUploaded.name.endsWith('.doc') || fileUploaded.name.endsWith('.docx') ? '#2B579A' : '#EF4444' }]}>
+                  <Text style={styles.pdfIconText}>{fileUploaded.type.includes('word') || fileUploaded.name.endsWith('.doc') || fileUploaded.name.endsWith('.docx') ? 'DOC' : 'PDF'}</Text>
                 </View>
                 <View style={styles.fileDetails}>
-                  <Text style={styles.fileName}>Alex_Joshua_Resume.pdf</Text>
-                  <Text style={styles.fileSize}>2.5 MB</Text>
+                  <Text style={styles.fileName} numberOfLines={1} ellipsizeMode="middle">{fileUploaded.name.length > 25 ? fileUploaded.name.substring(0, 25) + '...' : fileUploaded.name}</Text>
+                  <Text style={styles.fileSize}>{(fileUploaded.size / (1024 * 1024)).toFixed(2)} MB</Text>
                 </View>
               </View>
-              <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" />
+              <TouchableOpacity onPress={() => setFileUploaded(null)}>
+                <Ionicons name="close-circle-outline" size={24} color="#EF4444" />
+              </TouchableOpacity>
             </View>
           )}
         </View>

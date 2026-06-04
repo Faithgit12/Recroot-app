@@ -57,8 +57,8 @@ export default function SignupScreen() {
       return;
     }
 
-    // 2. Navigate to the OTP verification screen
-    router.push("/otp");
+    // 2. Navigate to the Profile Creation screen
+    router.push("/profile/personal-info");
   };
 
   // Navigates to the Login page
@@ -210,7 +210,7 @@ export default function SignupScreen() {
               </Pressable>
 
               {/* Submit Button */}
-              <Pressable style={styles.button} onPress={() => router.push("/auth/profile-setup")}>
+              <Pressable style={styles.button} onPress={handleContinue}>
                 <Text style={styles.buttonText}>Continue</Text>
               </Pressable>
             </View>

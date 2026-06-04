@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { styles } from './styles';
 import { CustomInput } from './components/CustomInput';
@@ -20,52 +20,63 @@ export default function PersonalInfoScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#EEF3F9' }}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Tell Us About Yourself</Text>
-        <Text style={styles.subtitle}>Let's set up your profile to personalize your experiences</Text>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={Platform.OS !== 'web'}
+      >
+        <ScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.container, { paddingBottom: 40 }]} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.title}>Tell Us About Yourself</Text>
+          <Text style={styles.subtitle}>Let's set up your profile to personalize your experiences</Text>
 
-        <CustomInput
-          label="Your Name"
-          placeholder="Alex Joshua"
-          value={name}
-          onChangeText={setName}
-        />
+          <CustomInput
+            label="Your Name"
+            placeholder="Alex Joshua"
+            value={name}
+            onChangeText={setName}
+          />
 
-        <CustomInput
-          label="Phone Number"
-          placeholder=""
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-        />
+          <CustomInput
+            label="Phone Number"
+            placeholder=""
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+          />
 
-        <CustomInput
-          label="Your email"
-          placeholder="example@gmail.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <CustomInput
+            label="Your email"
+            placeholder="example@gmail.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <CustomDropdown
-          label="Country"
-          value={country}
-          options={['United States', 'United Kingdom', 'Nigeria', 'South Africa', 'Kenya']}
-          onSelect={setCountry}
-        />
+          <CustomDropdown
+            label="Country"
+            value={country}
+            options={['United States', 'United Kingdom', 'Nigeria', 'South Africa', 'Kenya']}
+            onSelect={setCountry}
+          />
 
-        <CustomDropdown
-          label="State / city"
-          value={stateCity}
-          options={['North Carolina', 'Scotland', 'Lagos', 'Western Cape', 'Nairobi County']}
-          onSelect={setStateCity}
-        />
+          <CustomDropdown
+            label="State / city"
+            value={stateCity}
+            options={['North Carolina', 'Scotland', 'Lagos', 'Western Cape', 'Nairobi County']}
+            onSelect={setStateCity}
+          />
 
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>Next</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity style={styles.button} onPress={handleNext}>
+            <Text style={styles.buttonText}>Next</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
