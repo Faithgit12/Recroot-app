@@ -73,7 +73,7 @@ export default function LoginScreen() {
     }
 
     // Success redirect
-    router.replace("/home");
+    router.replace("/auth/login-success");
   };
 
   // Navigates to the Signup page
