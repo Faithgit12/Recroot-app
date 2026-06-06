@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import BottomTabs from '../_components/BottomTabs';
 
 export default function ProfileScreen() {

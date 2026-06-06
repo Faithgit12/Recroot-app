@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { styles } from './styles';
 import { CustomInput } from './components/CustomInput';

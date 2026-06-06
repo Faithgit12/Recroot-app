@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import BottomTabs from './_components/BottomTabs';
@@ -190,7 +191,20 @@ export default function HomeScreen() {
           <View style={styles.dropdownMenu}>
             <Text style={styles.dropdownHeader}>Home Screen Options</Text>
             {['Home', 'Resume', 'Job Description', 'Match Score', 'Interview Prep', 'Report'].map((item, index) => (
-              <TouchableOpacity key={index} style={styles.dropdownItem} onPress={() => setIsMenuOpen(false)}>
+              <TouchableOpacity 
+                key={index} 
+                style={styles.dropdownItem} 
+                onPress={() => {
+                  setIsMenuOpen(false);
+                  if (item === 'Resume') {
+                    router.push('/resume');
+                  } else if (item === 'Job Description') {
+                    router.push('/paste-job-description');
+                  } else if (item === 'Match Score') {
+                    router.push('/match-score');
+                  }
+                }}
+              >
                 <Text style={styles.dropdownItemText}>{item}</Text>
               </TouchableOpacity>
             ))}
