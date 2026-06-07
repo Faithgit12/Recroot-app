@@ -8,19 +8,19 @@ export default function BottomTabs({ activeTab }: { activeTab: 'home' | 'jobs' |
 
   return (
     <View style={styles.tabBar}>
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/home')}>
+      <TouchableOpacity style={styles.tabItem} onPress={() => router.replace('/home')}>
         <Ionicons name="home" size={24} color={activeTab === 'home' ? '#183C6B' : '#6B7280'} />
         <Text style={[styles.tabText, activeTab === 'home' && styles.tabTextActive]}>Home</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/jobs')}>
+      <TouchableOpacity style={styles.tabItem} onPress={() => router.replace('/jobs')}>
         <Ionicons name="briefcase-outline" size={24} color={activeTab === 'jobs' ? '#183C6B' : '#6B7280'} />
         <Text style={[styles.tabText, activeTab === 'jobs' && styles.tabTextActive]}>Jobs</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/apps')}>
+      <TouchableOpacity style={styles.tabItem} onPress={() => router.replace('/apps')}>
         <Ionicons name="grid-outline" size={24} color={activeTab === 'apps' ? '#183C6B' : '#6B7280'} />
         <Text style={[styles.tabText, activeTab === 'apps' && styles.tabTextActive]}>Apps</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/profile')}>
+      <TouchableOpacity style={styles.tabItem} onPress={() => router.replace('/profile')}>
         <Ionicons name="person-outline" size={24} color={activeTab === 'profile' ? '#183C6B' : '#6B7280'} />
         <Text style={[styles.tabText, activeTab === 'profile' && styles.tabTextActive]}>Profile</Text>
       </TouchableOpacity>

@@ -22,8 +22,8 @@ export default function MatchScoreScreen() {
     skillsMatch: 0,
     qualificationMatch: 0,
     experienceMatch: 0,
-    match: 0,
-    skillsMatch2: 0,
+    educationMatch: 0,
+    overallFit: 0,
   });
 
   useEffect(() => {
@@ -112,19 +112,27 @@ export default function MatchScoreScreen() {
             <Text style={styles.metricValue}>{scoreData.experienceMatch}%</Text>
           </View>
           <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Match</Text>
-            <Text style={styles.metricValue}>{scoreData.match}%</Text>
+            <Text style={styles.metricLabel}>Education Match</Text>
+            <Text style={styles.metricValue}>{scoreData.educationMatch}%</Text>
           </View>
           <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Skills Match</Text>
-            <Text style={styles.metricValue}>{scoreData.skillsMatch2}%</Text>
+            <Text style={styles.metricLabel}>Overall Fit</Text>
+            <Text style={styles.metricValue}>{scoreData.overallFit}%</Text>
           </View>
         </View>
 
         <View style={styles.spacer} />
 
         {/* View Details Button */}
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={() => {
+            router.push({
+              pathname: '/match-score-details',
+              params: { matchResult: JSON.stringify(scoreData) }
+            });
+          }}
+        >
           <Text style={styles.buttonText}>View Details</Text>
         </TouchableOpacity>
 

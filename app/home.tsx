@@ -202,6 +202,10 @@ export default function HomeScreen() {
                     router.push('/paste-job-description');
                   } else if (item === 'Match Score') {
                     router.push('/match-score');
+                  } else if (item === 'Interview Prep') {
+                    router.push('/interview' as any);
+                  } else if (item === 'Report') {
+                    router.push('/report/create');
                   }
                 }}
               >

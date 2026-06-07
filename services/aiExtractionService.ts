@@ -12,8 +12,8 @@ export interface MatchScoreResult {
   skillsMatch: number;
   qualificationMatch: number;
   experienceMatch: number;
-  match: number;
-  skillsMatch2: number; // For the duplicated field in mockup
+  educationMatch: number;
+  overallFit: number;
 }
 
 /**
@@ -55,11 +55,11 @@ export const matchResumeToJob = async (resumeText: string, jobDetails: Extracted
     setTimeout(() => {
       resolve({
         overallScore: 95,
-        skillsMatch: 94,
-        qualificationMatch: 94,
-        experienceMatch: 94,
-        match: 94,
-        skillsMatch2: 94
+        skillsMatch: 96,
+        qualificationMatch: 96,
+        experienceMatch: 96,
+        educationMatch: 96,
+        overallFit: 96
       });
     }, 2000); // Simulate 2 second AI processing
   });
