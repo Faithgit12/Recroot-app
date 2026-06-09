@@ -54,27 +54,24 @@ export default function EditExtractedDetailsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: '#F8FAFC' }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           
-          {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color="#0F172A" />
             </TouchableOpacity>
           </View>
 
-          {/* Title & Subtitle */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Confirm and Edit Details</Text>
             <Text style={styles.subtitle}>Review and edit the extracted information</Text>
           </View>
 
-          {/* Form Fields */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Job Title</Text>
             <View style={styles.inputWrapper}>
@@ -130,7 +127,6 @@ export default function EditExtractedDetailsScreen() {
             </View>
           </View>
 
-          {/* Key Skills Tags */}
           <View style={styles.keySkillsContainer}>
             <Text style={styles.keySkillsTitle}>Key Skills</Text>
             <View style={styles.tagsWrapper}>
@@ -144,14 +140,13 @@ export default function EditExtractedDetailsScreen() {
 
           <View style={styles.spacer} />
 
-          {/* Save & Continue Button */}
           <TouchableOpacity style={styles.button} onPress={handleSaveAndContinue}>
             <Text style={styles.buttonText}>Save & Continue</Text>
           </TouchableOpacity>
 
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

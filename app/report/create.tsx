@@ -4,22 +4,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchUserActivities, ActivitySource } from '../../services/api/reports';
+import { useReportStore } from '../../store/reportStore';
 
 export default function CreateReportScreen() {
   const router = useRouter();
   
-  // State for selection
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
-  const [sources, setSources] = useState<ActivitySource[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { recentActivities, setActivities } = useReportStore();
+  
+  const [isLoading, setIsLoading] = useState(recentActivities.length === 0);
 
   useEffect(() => {
     const loadActivities = async () => {
-      setIsLoading(true);
       try {
         const data = await fetchUserActivities();
-        setSources(data);
+        setActivities(data); // This automatically keeps the last 10
       } catch (error) {
         console.error("Error loading activities:", error);
       } finally {
@@ -51,7 +52,6 @@ export default function CreateReportScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -63,7 +63,6 @@ export default function CreateReportScreen() {
         <Text style={styles.pageTitle}>Create New Report</Text>
         <Text style={styles.pageSubtitle}>Choose the type of report you want to generate</Text>
 
-        {/* Report Types (Horizontal Scroll) */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.reportTypesContainer}>
           {reportTypes.map((type) => (
             <TouchableOpacity 
@@ -87,7 +86,6 @@ export default function CreateReportScreen() {
           <>
             <Text style={styles.sectionTitle}>Select Source</Text>
 
-            {/* Sources List */}
             <View style={styles.sourcesContainer}>
               {isLoading ? (
                 <View style={{ padding: 24, alignItems: 'center' }}>
@@ -95,7 +93,7 @@ export default function CreateReportScreen() {
                   <Text style={{ marginTop: 12, color: '#6B7280' }}>Loading past activities...</Text>
                 </View>
               ) : (
-                sources
+                recentActivities
                   .filter((source) => {
                     if (selectedType === 'Interview Prep Report') return source.type === 'interview';
                     if (selectedType === 'Match Report') return source.type === 'match' || source.type === 'job';
@@ -126,9 +124,15 @@ export default function CreateReportScreen() {
               style={[styles.continueButton, !selectedSource && { backgroundColor: '#94A3B8' }]} 
               onPress={() => {
                 if (selectedSource) {
+                  const sourceObj = recentActivities.find(s => s.id === selectedSource);
                   router.push({ 
                     pathname: '/report/export', 
-                    params: { type: selectedType, sourceId: selectedSource } 
+                    params: { 
+                      type: selectedType, 
+                      sourceId: selectedSource,
+                      questions: sourceObj?.questions ? JSON.stringify(sourceObj.questions) : undefined,
+                      rawData: sourceObj?.rawData ? JSON.stringify(sourceObj.rawData) : undefined
+                    } 
                   } as any);
                 }
               }}

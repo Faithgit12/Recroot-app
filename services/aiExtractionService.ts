@@ -1,3 +1,5 @@
+import api from './api/client';
+
 export interface ExtractedJobDetails {
   jobTitle: string;
   experience: string;
@@ -14,43 +16,24 @@ export interface MatchScoreResult {
   experienceMatch: number;
   educationMatch: number;
   overallFit: number;
+  missingSkills?: string[];
+  matchedSkills?: string[];
+  feedback?: string;
+  jobTitle?: string;
 }
 
-/**
- * Placeholder for the actual AI endpoint. 
- * Replace these when the backend URLs are provided.
- */
-const AI_EXTRACTION_URL = '';
-const AI_MATCHING_URL = '';
-
 export const extractJobDetails = async (jobDescription: string): Promise<ExtractedJobDetails> => {
-  if (AI_EXTRACTION_URL) {
-    // TODO: Implement actual fetch call once payload details are provided
-    // const response = await fetch(AI_EXTRACTION_URL, { ... });
-    // return response.json();
+  try {
+    const response = await api.post('/jobs/extract', { description: jobDescription });
+    return response.data;
+  } catch (error) {
+    console.error('Error extracting job details:', error);
+    throw error;
   }
-
-  // Mock implementation for UI development
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        jobTitle: 'Senior Product Designer',
-        experience: '2+ Years',
-        jobType: 'Remote',
-        skills: 'Prototyping, soft skills',
-        location: 'Not Specified',
-        keySkills: ['Figma', 'Wireframing', 'User Research', 'Prototyping', 'Design Systems']
-      });
-    }, 3000); // Simulate 3 second AI processing
-  });
 };
 
 export const matchResumeToJob = async (resumeText: string, jobDetails: ExtractedJobDetails): Promise<MatchScoreResult> => {
-  if (AI_MATCHING_URL) {
-    // TODO: Implement actual fetch call once payload details are provided
-  }
-
-  // Mock implementation for UI development
+  // Placeholder for when matchResumeToJob is implemented
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({

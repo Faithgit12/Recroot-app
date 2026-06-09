@@ -4,11 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MatchScoreResult } from '../services/aiExtractionService';
+import { useMatchStore } from '../store/matchStore';
+import { exportMatchReport } from './utils/exportUtils';
 
 export default function MatchScoreDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { matchResult } = params;
+  const { recentMatch } = useMatchStore();
 
   const [scoreData, setScoreData] = useState<MatchScoreResult>({
     overallScore: 0,
@@ -27,23 +30,19 @@ export default function MatchScoreDetailsScreen() {
       } catch (e) {
         console.error("Failed to parse match result");
       }
+    } else if (recentMatch) {
+      setScoreData(recentMatch);
     }
-  }, [matchResult]);
+  }, [matchResult, recentMatch]);
 
   const matchData = [
-    { label: 'Skills Match', score: scoreData.skillsMatch || 96, color: '#22C55E' },
-    { label: 'Qualification Match', score: scoreData.qualificationMatch || 96, color: '#22C55E' },
-    { label: 'Experience Match', score: scoreData.experienceMatch || 96, color: '#22C55E' },
-    { label: 'Education Match', score: scoreData.educationMatch || 96, color: '#22C55E' },
-    { label: 'Overall Fit', score: scoreData.overallFit || 96, color: '#22C55E' },
-    { label: 'Overall Score', score: scoreData.overallScore || 95, color: '#183C6B' },
+    { label: 'Overall Score', score: scoreData.overallScore ?? 95, color: '#183C6B' },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#0F172A" />
@@ -52,7 +51,6 @@ export default function MatchScoreDetailsScreen() {
 
         <Text style={styles.pageTitle}>Match Score Breakdown</Text>
 
-        {/* Progress Bars */}
         <View style={styles.progressSection}>
           {matchData.map((item, index) => (
             <View key={index} style={styles.progressRow}>
@@ -67,9 +65,49 @@ export default function MatchScoreDetailsScreen() {
           ))}
         </View>
 
+        {scoreData.matchedSkills && scoreData.matchedSkills.length > 0 && (
+          <View style={styles.skillsSection}>
+            <Text style={styles.skillsTitle}>Matched Skills</Text>
+            <View style={styles.tagsContainer}>
+              {scoreData.matchedSkills.map((skill, index) => (
+                <View key={index} style={styles.matchedTag}>
+                  <Text style={styles.matchedTagText}>{skill}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {scoreData.missingSkills && scoreData.missingSkills.length > 0 && (
+          <View style={styles.skillsSection}>
+            <Text style={styles.skillsTitle}>Missing Skills</Text>
+            <View style={styles.tagsContainer}>
+              {scoreData.missingSkills.map((skill, index) => (
+                <View key={index} style={styles.missingTag}>
+                  <Text style={styles.missingTagText}>{skill}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {scoreData.feedback && (
+          <View style={styles.feedbackSection}>
+            <Text style={styles.feedbackTitle}>Feedback</Text>
+            <Text style={styles.feedbackText}>{scoreData.feedback}</Text>
+          </View>
+        )}
+
         <View style={styles.spacer} />
 
-        {/* Continue Button */}
+        <TouchableOpacity 
+          style={styles.exportButton} 
+          onPress={() => exportMatchReport(scoreData)}
+        >
+          <Ionicons name="download-outline" size={20} color="#183C6B" style={{ marginRight: 8 }} />
+          <Text style={styles.exportButtonText}>Export PDF</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.continueButton} 
           onPress={() => router.replace('/home')}
@@ -152,5 +190,74 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  exportButton: {
+    backgroundColor: '#EEF3F9',
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#183C6B',
+  },
+  exportButtonText: {
+    color: '#183C6B',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  skillsSection: {
+    marginBottom: 24,
+  },
+  skillsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0F172A',
+    marginBottom: 12,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  matchedTag: {
+    backgroundColor: '#DCFCE7',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  matchedTagText: {
+    color: '#166534',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  missingTag: {
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  missingTagText: {
+    color: '#991B1B',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  feedbackSection: {
+    marginBottom: 24,
+    backgroundColor: '#F1F5F9',
+    padding: 16,
+    borderRadius: 12,
+  },
+  feedbackTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0F172A',
+    marginBottom: 8,
+  },
+  feedbackText: {
+    fontSize: 15,
+    color: '#334155',
+    lineHeight: 24,
   },
 });

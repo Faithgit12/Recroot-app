@@ -4,9 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import BottomTabs from '../_components/BottomTabs';
+import { useAuthStore, calculateProfileStrength } from '../../store/authStore';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { profile } = useAuthStore();
+  const userName = profile?.fullName || 'User Name';
+  const userRole = profile?.jobTitle || 'Candidate';
+  const profileStrength = calculateProfileStrength(profile || {});
 
   const menuItems = [
     { id: '1', title: 'Personal Information', route: '/profile/personal-info' },
@@ -18,7 +23,6 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/home')}>
           <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -33,31 +37,28 @@ export default function ProfileScreen() {
 
       <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
-        {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.userInfoRow}>
             <View style={styles.avatarContainer}>
-              {/* Fallback avatar if no image is present */}
               <Ionicons name="person-circle" size={54} color="#CBD5E1" />
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>Alex Joshua</Text>
-              <Text style={styles.userRole}>Candidate</Text>
+              <Text style={styles.userName}>{userName}</Text>
+              <Text style={styles.userRole}>{userRole}</Text>
             </View>
           </View>
 
           <View style={styles.profileStrengthContainer}>
             <View style={styles.profileStrengthHeader}>
               <Text style={styles.profileStrengthLabel}>Profile Strength</Text>
-              <Text style={styles.profileStrengthValue}>96%</Text>
+              <Text style={styles.profileStrengthValue}>{profileStrength}%</Text>
             </View>
             <View style={styles.progressBarBackground}>
-              <View style={[styles.progressBarFill, { width: '96%' }]} />
+              <View style={[styles.progressBarFill, { width: `${profileStrength}%` }]} />
             </View>
           </View>
         </View>
 
-        {/* Menu Items */}
         <View style={styles.menuContainer}>
           {menuItems.map((item) => (
             <TouchableOpacity 
@@ -75,14 +76,12 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Edit Profile Button */}
         <TouchableOpacity style={styles.editButton}>
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
 
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <BottomTabs activeTab="profile" />
     </SafeAreaView>
   );

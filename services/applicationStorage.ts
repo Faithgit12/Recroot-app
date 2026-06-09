@@ -16,7 +16,6 @@ export const saveApplication = async (application: SavedApplication) => {
   try {
     const existingData = await AsyncStorage.getItem(STORAGE_KEY);
     const applications: SavedApplication[] = existingData ? JSON.parse(existingData) : [];
-    // Prepend so the newest application appears first
     applications.unshift(application);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
   } catch (error) {

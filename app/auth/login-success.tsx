@@ -8,7 +8,6 @@ export default function LoginSuccessScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    // Automatically redirect to home after 2.5 seconds
     const timer = setTimeout(() => {
       router.replace('/home');
     }, 2500);
@@ -20,12 +19,10 @@ export default function LoginSuccessScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         
-        {/* Mock Confetti/Checkmark Illustration */}
         <View style={styles.illustrationContainer}>
           <View style={styles.iconCircle}>
             <Ionicons name="checkmark" size={60} color="#10B981" />
           </View>
-          {/* Confetti pieces mocked using scattered small views */}
           <View style={[styles.confetti, { top: -20, left: 10, backgroundColor: '#F472B6' }]} />
           <View style={[styles.confetti, { top: 0, right: -10, backgroundColor: '#3B82F6' }]} />
           <View style={[styles.confetti, { bottom: -10, left: -20, backgroundColor: '#FBBF24' }]} />

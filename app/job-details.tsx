@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-
+import { resumeService } from '../services/api/resumeService';
+import { scoringService } from '../services/api/scoringService';
+import { ActivityIndicator, Alert } from 'react-native';
 export default function JobDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -17,7 +19,6 @@ export default function JobDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with Back button */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -25,7 +26,6 @@ export default function JobDetailsScreen() {
       </View>
 
       <View style={styles.content}>
-        {/* Tabs */}
         <View style={styles.tabsContainer}>
           {['About', 'Requirements', 'Company'].map((tab) => (
             <TouchableOpacity 
@@ -72,7 +72,6 @@ export default function JobDetailsScreen() {
         </ScrollView>
       </View>
 
-      {/* Fixed Apply Button */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.applyButton}

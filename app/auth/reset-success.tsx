@@ -8,7 +8,6 @@ export default function ResetSuccessScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    // Automatically redirect to login after 2.5 seconds
     const timer = setTimeout(() => {
       router.replace('/login');
     }, 2500);
@@ -21,7 +20,6 @@ export default function ResetSuccessScreen() {
       <View style={styles.content}>
         
         <View style={styles.card}>
-          {/* Mock Success Illustration */}
           <View style={styles.illustrationContainer}>
             <View style={styles.iconCircle}>
               <Ionicons name="checkmark" size={60} color="#FFFFFF" />

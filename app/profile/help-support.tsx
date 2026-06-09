@@ -22,7 +22,6 @@ export default function HelpSupportScreen() {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -31,17 +30,14 @@ export default function HelpSupportScreen() {
 
         <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           
-          {/* Illustration */}
           <View style={styles.illustrationContainer}>
             <View style={styles.illustrationCircle}>
               <Ionicons name="headset" size={48} color="#3B82F6" />
             </View>
           </View>
 
-          {/* Title */}
           <Text style={styles.title}>How can we help you?</Text>
 
-          {/* Search Bar */}
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={20} color="#94A3B8" style={styles.searchIcon} />
             <TextInput
@@ -54,7 +50,6 @@ export default function HelpSupportScreen() {
             />
           </View>
 
-          {/* Links List */}
           <View style={styles.listContainer}>
             {helpItems.map((item) => (
               <TouchableOpacity key={item.id} style={styles.listItem}>
@@ -66,7 +61,6 @@ export default function HelpSupportScreen() {
 
         </ScrollView>
 
-        {/* Contact Support Button - Fixed at bottom */}
         <View style={styles.footer}>
           <TouchableOpacity style={styles.contactButton}>
             <Text style={styles.contactButtonText}>Contact Support</Text>

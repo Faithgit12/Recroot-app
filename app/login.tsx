@@ -11,27 +11,29 @@ import {
   Alert,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import {Ionicons} from '@expo/vector-icons';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-// Import form styling
 import {styles} from "../Styles/FormStyles";
+import { authService } from "../services/api/authService";
+import { useAuthStore } from "../store/authStore";
+import { jwtDecode } from 'jwt-decode';
 
 export default function LoginScreen() {
   const router = useRouter();
 
-  // Form inputs state
+  const [tempName, setTempName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Visibility states
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Load saved email on screen mount if Remember Me was previously checked
   useEffect(() => {
     const loadSavedCredentials = async () => {
       try {
@@ -48,7 +50,6 @@ export default function LoginScreen() {
     loadSavedCredentials();
   }, []);
 
-  // Handles login verification
   const handleLogin = async () => {
     if (!email.trim() || !email.includes("@")) {
       Alert.alert("Validation Error", "Please enter a valid email address.");
@@ -59,8 +60,9 @@ export default function LoginScreen() {
       return;
     }
 
-    // Save recroot user credentials based on Remember Me toggle
     try {
+      setIsLoading(true);
+      // Save recroot user credentials based on Remember Me toggle
       if (rememberMe) {
         await AsyncStorage.setItem('savedEmail', email);
         await AsyncStorage.setItem('rememberMe', 'true');
@@ -68,15 +70,38 @@ export default function LoginScreen() {
         await AsyncStorage.removeItem('savedEmail');
         await AsyncStorage.removeItem('rememberMe');
       }
-    } catch (e) {
-      // Ignore storage write errors
-    }
 
-    // Success redirect
-    router.replace("/auth/login-success");
+      const res = await authService.login({ email, password });
+      
+      // Decode JWT token to get user details
+      let decodedProfile: any = { fullName: tempName || 'User', email, role: 'user' };
+      try {
+        if (res.token) {
+          const decoded = jwtDecode(res.token) as any;
+          decodedProfile = {
+            fullName: tempName || decoded.fullName || decoded.name || 'User',
+            email: decoded.email || email,
+            role: decoded.role || 'user',
+            jobTitle: decoded.jobTitle || '',
+            company: decoded.company || '',
+            location: decoded.location || '',
+            aboutMe: decoded.aboutMe || '',
+          };
+        }
+      } catch (err) {
+        console.warn("Failed to decode token", err);
+      }
+
+      useAuthStore.getState().login(res.token, decodedProfile);
+
+      router.replace("/home");
+    } catch (error: any) {
+      Alert.alert("Login Failed", error?.response?.data?.message || error.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Navigates to the Signup page
   const handleSignupRedirect = () => {
     router.push("/signup");
   };
@@ -94,7 +119,6 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Page Header */}
             <View>
            <Image source ={require('../assets/logomark.png')}
            style={{width:167.5, height:50, alignSelf:'center', marginTop:60 }}
@@ -105,10 +129,29 @@ export default function LoginScreen() {
               <Text style={styles.pageTitle}>Welcome Back!</Text>
             </View>
 
-            {/* Form Fields */}
             <View style={styles.formContainer}>
               
-              {/* Email Address Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Your Name (Temporary)</Text>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === "tempName" && styles.inputWrapperActive,
+                  ]}
+                >
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your name"
+                    placeholderTextColor="#94A3B8"
+                    value={tempName}
+                    onChangeText={setTempName}
+                    onFocus={() => setFocusedField("tempName")}
+                    onBlur={() => setFocusedField(null)}
+                    autoCapitalize="words"
+                  />
+                </View>
+              </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email Address</Text>
                 <View
@@ -132,7 +175,6 @@ export default function LoginScreen() {
                 </View>
               </View>
 
-              {/* Password Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Password</Text>
                 <View
@@ -164,9 +206,12 @@ export default function LoginScreen() {
                 </View>
               </View>
 
-              {/* Login Action Button */}
-              <Pressable style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Log In</Text>
+              <Pressable style={styles.button} onPress={handleLogin} disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonText}>Log In</Text>
+                )}
               </Pressable>
               </View>
             <View style={{
@@ -179,7 +224,6 @@ export default function LoginScreen() {
               <Text style={styles.footerText}>Remember me</Text>
               </View>
 
-            {/* Forgot Password Link */}
             <View>
             <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
               <Text style={{fontSize:15, fontWeight: '400', color:"#183C6B"}}>
@@ -189,7 +233,6 @@ export default function LoginScreen() {
              </View>
              </View>
              
-            {/* Signup Navigation Link */}
             <View style={styles.footerContainer}>
               <Text style={styles.footerText}>Don&apos;t have an account?</Text>
               <Pressable onPress={handleSignupRedirect}>

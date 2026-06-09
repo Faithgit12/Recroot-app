@@ -11,7 +11,6 @@ export default function ResetPasswordScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Validation checks
   const hasMinLength = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumberOrSpecial = /[0-9!@#$%^&*]/.test(password);
@@ -36,7 +35,6 @@ export default function ResetPasswordScreen() {
 
           <View style={styles.formContainer}>
             
-            {/* New Password */}
             <Text style={styles.inputLabel}>New Password</Text>
             <View style={styles.inputWrapper}>
               <TextInput
@@ -53,7 +51,6 @@ export default function ResetPasswordScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Validation Checklist */}
             <View style={styles.validationContainer}>
               <View style={styles.validationRow}>
                 <Ionicons name="checkmark-circle-outline" size={18} color={hasMinLength ? "#10B981" : "#94A3B8"} />
@@ -69,7 +66,6 @@ export default function ResetPasswordScreen() {
               </View>
             </View>
 
-            {/* Confirm New Password */}
             <Text style={styles.inputLabel}>Confirm New Password</Text>
             <View style={styles.inputWrapper}>
               <TextInput

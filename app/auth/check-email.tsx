@@ -33,7 +33,6 @@ export default function CheckEmailScreen() {
             Please check your inbox and follow{'\n'}the instructions
           </Text>
 
-          {/* Test button to proceed to the next step without a real email link */}
           <TouchableOpacity 
             style={styles.testButton} 
             onPress={() => router.push('/auth/reset-password')}

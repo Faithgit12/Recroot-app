@@ -2,11 +2,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { styles as globalStyles } from './styles';
+import { styles as globalStyles } from '../../components/profile/styles';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { resumeService } from '../../services/api/resumeService';
 
 type SelectedFile = {
+  uri: string;
   name: string;
   size: number;
   type: string;
@@ -15,6 +17,7 @@ type SelectedFile = {
 export default function UploadResumeScreen() {
   const router = useRouter();
   const [fileUploaded, setFileUploaded] = useState<SelectedFile | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleChooseFile = async () => {
     try {
@@ -25,7 +28,6 @@ export default function UploadResumeScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         
-        // 5MB limit in bytes
         const MAX_SIZE = 5 * 1024 * 1024;
         
         if (file.size && file.size > MAX_SIZE) {
@@ -34,6 +36,7 @@ export default function UploadResumeScreen() {
         }
 
         setFileUploaded({
+          uri: file.uri,
           name: file.name,
           size: file.size || 0,
           type: file.mimeType || 'application/pdf', // fallback if unknown
@@ -45,7 +48,18 @@ export default function UploadResumeScreen() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    if (fileUploaded && fileUploaded.uri) {
+      try {
+        setIsUploading(true);
+        await resumeService.uploadResume(fileUploaded.uri, fileUploaded.name, fileUploaded.type);
+      } catch (err: any) {
+        setIsUploading(false);
+        Alert.alert("Upload Failed", err?.response?.data?.message || err.message || "There was a problem uploading your resume.");
+        return;
+      }
+    }
+    setIsUploading(false);
     router.push('/profile/success');
   };
 
@@ -95,8 +109,12 @@ export default function UploadResumeScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={globalStyles.button} onPress={handleContinue}>
-          <Text style={globalStyles.buttonText}>Continue</Text>
+        <TouchableOpacity 
+          style={[globalStyles.button, isUploading && { opacity: 0.7 }]} 
+          onPress={handleContinue}
+          disabled={isUploading}
+        >
+          <Text style={globalStyles.buttonText}>{isUploading ? 'Uploading...' : 'Continue'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

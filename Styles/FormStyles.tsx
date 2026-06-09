@@ -3,7 +3,6 @@ import { StyleSheet, Dimensions } from "react-native";
 const { width, height } = Dimensions.get("window");
 
 export const styles = StyleSheet.create({
-  // Root and scrollable wrapper
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC", // Theme main background color
@@ -18,7 +17,6 @@ export const styles = StyleSheet.create({
     paddingBottom: 30,
   },
 
-  // Title section
   headerContainer: {
     alignItems: "center",
     marginTop: height * 0.05,
@@ -38,7 +36,6 @@ export const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Form input groups
   formContainer: {
     width: "100%",
   },
@@ -77,7 +74,6 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // Checkbox (Terms and Privacy)
   checkboxContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -115,7 +111,6 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // Primary action buttons
   button: {
     width: "100%",
     backgroundColor: "#183C6B",
@@ -135,7 +130,6 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  // Form Footers
   footerContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -152,7 +146,6 @@ export const styles = StyleSheet.create({
     marginLeft: 4,
   },
 
-  // OTP inputs
   otpBoxesContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -207,7 +200,6 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  // Custom numeric keypad
   keyboardContainer: {
     backgroundColor: "#E2E8F0",
     padding: 16,
@@ -249,7 +241,6 @@ export const styles = StyleSheet.create({
     color: "#0F172A",
   },
 
-  // Success Verification Modal / Card
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(15, 23, 42, 0.4)", // Semi-transparent dark background

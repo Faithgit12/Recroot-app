@@ -9,7 +9,6 @@ export default function ApplicationSuccessScreen() {
 
   useEffect(() => {
     if (params.resumeChanged === 'true') {
-      // Adding a slight delay to allow the screen transition to finish
       const timer = setTimeout(() => {
         Alert.alert(
           "Resume Changed",

@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 export default function GeneratedQuestionsScreen() {
   const router = useRouter();
 
-  // Local state for the generated questions
   const [questions, setQuestions] = useState<string[]>([
     'Why are you interested in this role',
     'Why are you interested in this role',

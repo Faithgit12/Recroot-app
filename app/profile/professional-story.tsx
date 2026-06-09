@@ -1,10 +1,12 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
-import { styles } from './styles';
-import { CustomInput } from './components/CustomInput';
-import { CustomDropdown } from './components/CustomDropdown';
+import { styles } from '../../components/profile/styles';
+import { CustomInput } from '../../components/profile/CustomInput';
+import { CustomDropdown } from '../../components/profile/CustomDropdown';
+import { authService } from '../../services/api/authService';
+import { useAuthStore } from '../../store/authStore';
 
 export default function ProfessionalStoryScreen() {
   const router = useRouter();
@@ -15,9 +17,48 @@ export default function ProfessionalStoryScreen() {
   const [employmentType, setEmploymentType] = useState('');
   const [skills, setSkills] = useState('');
   const [linkedin, setLinkedin] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleContinue = () => {
-    router.push('/profile/upload-resume');
+  const { profile, updateProfile } = useAuthStore();
+
+  React.useEffect(() => {
+    if (profile) {
+      if (profile.jobTitle) setRoleType(profile.jobTitle);
+      if (profile.skills && profile.skills.length > 0) {
+        setSkills(profile.skills.join(', '));
+      }
+    }
+  }, [profile]);
+
+  const handleContinue = async () => {
+    try {
+      setIsUpdating(true);
+      const skillsArray = skills ? skills.split(',').map(s => s.trim()) : [];
+      
+      updateProfile({
+        jobTitle: roleType,
+        skills: skillsArray,
+      });
+
+      try {
+        await authService.updateProfile({
+          title: roleType,
+          skills: skillsArray,
+        });
+      } catch (apiErr: any) {
+        if (apiErr?.response?.status === 404) {
+          console.warn("Backend endpoint for updating profile not found (404). Proceeding with local state only.");
+        } else {
+          console.error("Profile update failed:", apiErr);
+        }
+      }
+      
+      router.push('/profile/upload-resume');
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "An unexpected error occurred.");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -25,16 +66,19 @@ export default function ProfessionalStoryScreen() {
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         enabled={Platform.OS !== 'web'}
       >
-        <ScrollView 
-          style={{ flex: 1 }}
-          contentContainerStyle={[styles.container, { paddingBottom: 40 }]} 
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={styles.title}>Your Professional Story</Text>
-          <Text style={styles.subtitle}>Let's set up your career profile</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={[styles.container, { paddingBottom: 40 }]} 
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <Text style={styles.title}>Your Professional Story</Text>
+            <Text style={styles.subtitle}>Let's set up your career profile</Text>
 
           <CustomDropdown
             label="Experience Level"
@@ -79,10 +123,15 @@ export default function ProfessionalStoryScreen() {
             autoCapitalize="none"
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleContinue}>
-            <Text style={styles.buttonText}>Continue</Text>
+          <TouchableOpacity 
+            style={[styles.button, isUpdating && { opacity: 0.7 }]} 
+            onPress={handleContinue}
+            disabled={isUpdating}
+          >
+            <Text style={styles.buttonText}>{isUpdating ? 'Saving...' : 'Continue'}</Text>
           </TouchableOpacity>
         </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

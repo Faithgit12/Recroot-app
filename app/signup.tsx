@@ -8,34 +8,32 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import {Ionicons} from '@expo/vector-icons';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-// Import form styling
 import { styles } from "../Styles/FormStyles";
+import { authService } from "../services/api/authService";
+import { useAuthStore } from "../store/authStore";
 
 export default function SignupScreen() {
   const router = useRouter();
 
-  // Form input states
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // UI interaction states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // States to highlight inputs when focused
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  // Handles form validation and submission
-  const handleContinue = () => {
-    // 1. Basic validation checks
+  const handleContinue = async () => {
     if (!name.trim()) {
       Alert.alert("Validation Error", "Please enter your name.");
       return;
@@ -57,11 +55,29 @@ export default function SignupScreen() {
       return;
     }
 
-    // 2. Navigate to the Profile Creation screen
-    router.push("/profile/personal-info");
+    try {
+      setIsLoading(true);
+      await authService.signup({
+        fullName: name,
+        email: email,
+        password: password,
+        role: 'candidate'
+      });
+      
+      const loginRes = await authService.login({
+        email: email,
+        password: password
+      });
+      
+      useAuthStore.getState().login(loginRes.token, { fullName: name, email, role: 'candidate' });
+      router.push("/profile/personal-info");
+    } catch (error: any) {
+      Alert.alert("Signup Failed", error?.response?.data?.message || error.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Navigates to the Login page
   const handleLoginRedirect = () => {
     router.push("/login");
   };
@@ -80,15 +96,12 @@ export default function SignupScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Page Header */}
             <View style={styles.headerContainer}>
               <Text style={styles.pageTitle}>Create an Account</Text>
             </View>
 
-            {/* Registration Form Fields */}
             <View style={styles.formContainer}>
               
-              {/* 1. Name Input Field */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Your Name</Text>
                 <View
@@ -110,7 +123,6 @@ export default function SignupScreen() {
                 </View>
               </View>
 
-              {/* 2. Email Input Field */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email Address</Text>
                 <View
@@ -134,7 +146,6 @@ export default function SignupScreen() {
                 </View>
               </View>
 
-              {/* 3. Password Input Field */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Create Password</Text>
                 <View
@@ -164,7 +175,6 @@ export default function SignupScreen() {
                 </View>
               </View>
 
-              {/* 4. Confirm Password Input Field */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Confirm Password</Text>
                 <View
@@ -194,7 +204,6 @@ export default function SignupScreen() {
                 </View>
               </View>
 
-              {/* Terms of Use and Privacy Checkbox */}
               <Pressable
                 style={styles.checkboxContainer}
                 onPress={() => setAgreeToTerms(!agreeToTerms)}
@@ -209,13 +218,15 @@ export default function SignupScreen() {
                 </Text>
               </Pressable>
 
-              {/* Submit Button */}
-              <Pressable style={styles.button} onPress={handleContinue}>
-                <Text style={styles.buttonText}>Continue</Text>
+              <Pressable style={styles.button} onPress={handleContinue} disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonText}>Continue</Text>
+                )}
               </Pressable>
             </View>
 
-            {/* Footer Navigation */}
             <View style={styles.footerContainer}>
               <Text style={styles.footerText}>Already have an account?</Text>
               <Pressable onPress={handleLoginRedirect}>

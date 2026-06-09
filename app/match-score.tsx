@@ -11,11 +11,13 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { MatchScoreResult } from '../services/aiExtractionService';
+import { useMatchStore } from '../store/matchStore';
 
 export default function MatchScoreScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { matchResult } = params;
+  const { recentMatch } = useMatchStore();
 
   const [scoreData, setScoreData] = useState<MatchScoreResult>({
     overallScore: 0,
@@ -34,35 +36,54 @@ export default function MatchScoreScreen() {
       } catch (e) {
         console.error("Failed to parse match result");
       }
+    } else if (recentMatch) {
+      // Fallback to recent match if no params were provided (e.g. from the Home Menu)
+      setScoreData(recentMatch);
     }
-  }, [matchResult]);
+  }, [matchResult, recentMatch]);
 
-  // SVG circular progress setup
   const size = 180;
   const strokeWidth = 20;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
-  // Calculate dash offset for score percentage
   const strokeDashoffset = circumference - (scoreData.overallScore / 100) * circumference;
+
+  const getVerdictTitle = (score: number) => {
+    if (score >= 80) return "Great Match 👋";
+    if (score >= 50) return "Good Match 👍";
+    if (score >= 20) return "Fair Match 🤔";
+    return "Poor Match 😬";
+  };
+
+  const getVerdictSubtitle = (score: number) => {
+    if (score >= 80) return "You're a strong candidate for this role";
+    if (score >= 50) return "You have a solid chance for this role";
+    if (score >= 20) return "You might need to upskill for this role";
+    return "This role might not be the best fit right now";
+  };
+
+  const getVerdictColor = (score: number) => {
+    if (score >= 80) return "#22C55E"; // Green
+    if (score >= 50) return "#EAB308"; // Yellow
+    if (score >= 20) return "#F97316"; // Orange
+    return "#EF4444"; // Red
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#0F172A" />
           </TouchableOpacity>
         </View>
 
-        {/* Score Card */}
         <View style={styles.scoreCard}>
           <Text style={styles.scoreCardTitle}>Overall Match Score</Text>
           
           <View style={styles.progressContainer}>
             <Svg width={size} height={size}>
-              {/* Background Circle */}
               <Circle
                 stroke="#F1F5F9"
                 fill="none"
@@ -71,9 +92,8 @@ export default function MatchScoreScreen() {
                 r={radius}
                 strokeWidth={strokeWidth}
               />
-              {/* Foreground Circle (Green) */}
               <Circle
-                stroke="#22C55E"
+                stroke={getVerdictColor(scoreData.overallScore)}
                 fill="none"
                 cx={size / 2}
                 cy={size / 2}
@@ -91,39 +111,17 @@ export default function MatchScoreScreen() {
             </View>
           </View>
 
-          <Text style={styles.verdictText}>Great Match 👋</Text>
+          <Text style={[styles.verdictText, { color: getVerdictColor(scoreData.overallScore) }]}>
+            {getVerdictTitle(scoreData.overallScore)}
+          </Text>
           <Text style={styles.verdictSubtext}>
-            You're a strong candidate for this role
+            {getVerdictSubtitle(scoreData.overallScore)}
           </Text>
         </View>
 
-        {/* Metrics List */}
-        <View style={styles.metricsContainer}>
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Skills Match</Text>
-            <Text style={styles.metricValue}>{scoreData.skillsMatch}%</Text>
-          </View>
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Qualification Match</Text>
-            <Text style={styles.metricValue}>{scoreData.qualificationMatch}%</Text>
-          </View>
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Experience Match</Text>
-            <Text style={styles.metricValue}>{scoreData.experienceMatch}%</Text>
-          </View>
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Education Match</Text>
-            <Text style={styles.metricValue}>{scoreData.educationMatch}%</Text>
-          </View>
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Overall Fit</Text>
-            <Text style={styles.metricValue}>{scoreData.overallFit}%</Text>
-          </View>
-        </View>
 
         <View style={styles.spacer} />
 
-        {/* View Details Button */}
         <TouchableOpacity 
           style={styles.button}
           onPress={() => {

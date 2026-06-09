@@ -9,7 +9,6 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
 
   const handleReset = () => {
-    // Navigate to check email screen
     router.push('/auth/check-email');
   };
 
@@ -23,7 +22,6 @@ export default function ForgotPasswordScreen() {
           
           <View style={styles.header}>
             <View style={styles.logoPlaceholder}>
-              {/* App Logo Placeholder */}
               <Ionicons name="infinite" size={48} color="#183C6B" />
             </View>
             <Text style={styles.title}>Forgot Password</Text>

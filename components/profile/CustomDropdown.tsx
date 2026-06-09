@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
-import { styles } from '../styles';
+import { styles } from './styles';
 import { Ionicons } from '@expo/vector-icons';
 
 interface CustomDropdownProps {

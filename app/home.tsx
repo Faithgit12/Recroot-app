@@ -4,8 +4,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal }
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import BottomTabs from './_components/BottomTabs';
+import { jobService } from '../services/api/jobService';
+import { applicationService } from '../services/api/applicationService';
+import { useAuthStore, calculateProfileStrength } from '../store/authStore';
 
-// Define Data Models
 interface Job {
   id: string;
   title: string;
@@ -22,20 +24,6 @@ interface Application {
   appliedDate: string;
 }
 
-// Mock User Profile data model for strength calculation
-interface UserProfile {
-  name: string;
-  email: string;
-  experienceLevel?: string;
-  industry?: string;
-  roleType?: string;
-  employmentType?: string;
-  skills?: string;
-  linkedin?: string;
-  resumeUploaded?: boolean;
-}
-
-// Dummy mock data matching the design
 const MOCK_JOBS: Job[] = [
   {
     id: '1',
@@ -70,18 +58,6 @@ const MOCK_APPLICATIONS: Application[] = [
   }
 ];
 
-const MOCK_USER: UserProfile = {
-  name: 'Alex',
-  email: 'alex@example.com',
-  experienceLevel: '3-5 years',
-  industry: 'Tech',
-  roleType: 'Designer',
-  employmentType: 'Full Time',
-  skills: 'UI/UX',
-  resumeUploaded: true,
-  // linkedin is missing, which gives us ~90%
-};
-
 export default function HomeScreen() {
   const router = useRouter();
   
@@ -90,44 +66,60 @@ export default function HomeScreen() {
   const [profileStrength, setProfileStrength] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Function to calculate profile strength based on how complete the profile is
-  const calculateProfileStrength = (profile: UserProfile) => {
-    const fieldsToCheck = [
-      'name', 'email', 'experienceLevel', 'industry', 
-      'roleType', 'employmentType', 'skills', 'linkedin', 'resumeUploaded'
-    ];
-    
-    let filledCount = 0;
-    fieldsToCheck.forEach(field => {
-      if (profile[field as keyof UserProfile]) {
-        filledCount++;
-      }
-    });
-
-    // We can use actual percentage in production, but we return 96 to exactly match the design
-    const rawPercentage = Math.round((filledCount / fieldsToCheck.length) * 100);
-    return 96; 
-  };
-
   useEffect(() => {
-    // In a real app, this is where the backend AI integrator would fetch matched jobs
-    // API.getRecommendedJobs(userProfile).then(setRecommendedJobs)
-    setRecommendedJobs(MOCK_JOBS);
-    setRecentApplications(MOCK_APPLICATIONS);
-    setProfileStrength(calculateProfileStrength(MOCK_USER));
+    const loadDashboardData = async () => {
+      try {
+        const jobs = await jobService.getJobs();
+        if (jobs && jobs.length > 0) {
+          const mappedJobs = jobs.map(j => ({
+            id: j._id || j.id || Math.random().toString(),
+            title: j.title,
+            company: 'Tech Corp', // placeholder
+            location: 'Remote',
+            type: 'Full Time',
+            salaryRange: 'Competitive'
+          }));
+          setRecommendedJobs(mappedJobs.slice(0, 5));
+        } else {
+          setRecommendedJobs(MOCK_JOBS);
+        }
+
+        const apps = await applicationService.getMyApplications();
+        if (apps && apps.length > 0) {
+          const mappedApps = apps.map(a => ({
+            id: a._id || a.id || Math.random().toString(),
+            role: 'Application - ' + a.status,
+            company: 'Company',
+            appliedDate: a.createdAt ? new Date(a.createdAt).toLocaleDateString() : 'Recently'
+          }));
+          setRecentApplications(mappedApps.slice(0, 5));
+        } else {
+          setRecentApplications(MOCK_APPLICATIONS);
+        }
+      } catch (err) {
+        console.log("Failed to fetch dashboard data:", err);
+        setRecommendedJobs(MOCK_JOBS);
+        setRecentApplications(MOCK_APPLICATIONS);
+      }
+    };
+    
+    loadDashboardData();
+    const currentProfile = useAuthStore.getState().profile;
+    setProfileStrength(calculateProfileStrength(currentProfile || {}));
   }, []);
+
+  const { profile } = useAuthStore();
+  const userName = profile?.fullName?.split(' ')[0] || 'User';
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* Header Section */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Hello, Alex</Text>
+            <Text style={styles.greeting}>Hello, {userName}</Text>
             <Text style={styles.subGreeting}>Good to see you again</Text>
           </View>
           <TouchableOpacity style={styles.menuButton} onPress={() => setIsMenuOpen(true)}>
-            {/* Using a custom combination of icons to match the design's menu icon */}
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="caret-down" size={12} color="#1A1A1A" style={{ marginRight: 4 }} />
               <Ionicons name="list" size={28} color="#1A1A1A" />
@@ -135,7 +127,6 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Strength Section */}
         <View style={styles.profileStrengthContainer}>
           <View style={styles.profileStrengthHeader}>
             <Text style={styles.profileStrengthLabel}>Profile Strength</Text>
@@ -146,7 +137,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Recommended Jobs Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recommended Jobs</Text>
@@ -158,7 +148,6 @@ export default function HomeScreen() {
           {recommendedJobs.map((job) => (
             <View key={job.id} style={styles.jobCard}>
               <View style={styles.jobIconContainer}>
-                {/* Fallback to Ionicons aperture to simulate the Airbnb loop logo */}
                 <Ionicons name="aperture-outline" size={44} color="#FF5A5F" />
               </View>
               <View style={styles.jobDetails}>
@@ -172,7 +161,6 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Recent Application Section */}
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>Recent Application</Text>
           
@@ -185,7 +173,6 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Dropdown Menu Overlay */}
       <Modal visible={isMenuOpen} transparent={true} animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsMenuOpen(false)}>
           <View style={styles.dropdownMenu}>
@@ -216,7 +203,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Bottom Navigation Tab Bar */}
       <BottomTabs activeTab="home" />
     </SafeAreaView>
   );

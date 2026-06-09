@@ -1,9 +1,10 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import BottomTabs from './_components/BottomTabs';
+import { jobService } from '../services/api/jobService';
 
 interface Job {
   id: string;
@@ -16,75 +17,48 @@ interface Job {
   logo: string;
 }
 
-const MOCK_ALL_JOBS: Job[] = [
-  {
-    id: '1',
-    title: 'Senior Product Designer',
-    company: 'Air bnb',
-    location: 'Remote',
-    type: 'Full Time',
-    salaryRange: '$120- $180',
-    matchScore: '95% match',
-    logo: 'logo-airbnb',
-  },
-  {
-    id: '2',
-    title: 'Senior Product Designer',
-    company: 'Air bnb',
-    location: 'Remote',
-    type: 'Full Time',
-    salaryRange: '$120- $180',
-    matchScore: '95% match',
-    logo: 'logo-airbnb',
-  },
-  {
-    id: '3',
-    title: 'Product Designer',
-    company: 'Google',
-    location: 'Applied 2 days ago', // Keeping the mock text from design
-    type: 'Full Time',
-    salaryRange: '',
-    matchScore: '90% match',
-    logo: 'logo-google',
-  },
-  {
-    id: '4',
-    title: 'Product Designer',
-    company: 'Google',
-    location: 'Applied 2 days ago',
-    type: 'Full Time',
-    salaryRange: '',
-    matchScore: '90% match',
-    logo: 'logo-google',
-  },
-  {
-    id: '5',
-    title: 'Product Designer',
-    company: 'Google',
-    location: 'Applied 2 days ago',
-    type: 'Full Time',
-    salaryRange: '',
-    matchScore: '90% match',
-    logo: 'logo-google',
-  },
-  {
-    id: '6',
-    title: 'Product Designer',
-    company: 'Google',
-    location: 'Applied 2 days ago',
-    type: 'Full Time',
-    salaryRange: '',
-    matchScore: '90% match',
-    logo: 'logo-google',
-  }
-];
-
 const FILTERS = ['All', 'Remote', 'Full time', 'Part time'];
 
 export default function JobsScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
+  
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true);
+        const data = await jobService.getJobs();
+        if (data && data.length > 0) {
+          const mappedJobs = data.map((j: any) => ({
+            id: j._id || j.id || Math.random().toString(),
+            title: j.title || 'Unknown Title',
+            company: 'Tech Corp', // placeholder since backend job model might not have company
+            location: 'Remote',
+            type: 'Full Time',
+            salaryRange: 'Competitive',
+            matchScore: 'New',
+            logo: 'logo-airbnb'
+          }));
+          setJobs(mappedJobs);
+        }
+      } catch (err) {
+        console.log("Failed to fetch jobs:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  const filteredJobs = jobs.filter(job => 
+    (activeFilter === 'All' || job.type.toLowerCase().includes(activeFilter.toLowerCase()) || job.location.toLowerCase().includes(activeFilter.toLowerCase())) &&
+    (job.title.toLowerCase().includes(searchQuery.toLowerCase()) || job.company.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -116,33 +90,39 @@ export default function JobsScreen() {
       </View>
 
       <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        {MOCK_ALL_JOBS.map((job) => (
-          <TouchableOpacity 
-            key={job.id} 
-            style={styles.jobCard}
-            onPress={() => router.push({ pathname: '/job-details', params: { id: job.id, title: job.title, company: job.company, location: job.location } })}
-          >
-            <View style={styles.jobIconContainer}>
-              {job.logo === 'logo-google' ? (
-                <Ionicons name="logo-google" size={40} color="#DB4437" />
-              ) : (
-                <Ionicons name="aperture-outline" size={40} color="#FF5A5F" />
-              )}
-            </View>
-            <View style={styles.jobDetails}>
-              <Text style={styles.jobTitle} numberOfLines={1}>{job.title}</Text>
-              <Text style={styles.jobSubText}>
-                {job.company} {job.location ? `- ${job.location}` : ''}
-              </Text>
-              {!!job.salaryRange && (
-                <Text style={styles.jobSubText}>{job.salaryRange}</Text>
-              )}
-            </View>
-            <View style={styles.matchBadge}>
-              <Text style={styles.matchText}>{job.matchScore}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#183C6B" style={{ marginTop: 40 }} />
+        ) : filteredJobs.length === 0 ? (
+          <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280' }}>No jobs found.</Text>
+        ) : (
+          filteredJobs.map((job) => (
+            <TouchableOpacity 
+              key={job.id} 
+              style={styles.jobCard}
+              onPress={() => router.push({ pathname: '/job-details', params: { id: job.id, title: job.title, company: job.company, location: job.location } })}
+            >
+              <View style={styles.jobIconContainer}>
+                {job.logo === 'logo-google' ? (
+                  <Ionicons name="logo-google" size={40} color="#DB4437" />
+                ) : (
+                  <Ionicons name="aperture-outline" size={40} color="#FF5A5F" />
+                )}
+              </View>
+              <View style={styles.jobDetails}>
+                <Text style={styles.jobTitle} numberOfLines={1}>{job.title}</Text>
+                <Text style={styles.jobSubText}>
+                  {job.company} {job.location ? `- ${job.location}` : ''}
+                </Text>
+                {!!job.salaryRange && (
+                  <Text style={styles.jobSubText}>{job.salaryRange}</Text>
+                )}
+              </View>
+              <View style={styles.matchBadge}>
+                <Text style={styles.matchText}>{job.matchScore}</Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
       
       <BottomTabs activeTab="jobs" />

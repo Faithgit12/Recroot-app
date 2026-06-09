@@ -32,27 +32,24 @@ export default function PasteJobDescriptionScreen() {
   const isVeryGood = jobDescription.length >= VERY_GOOD_THRESHOLD;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: '#F8FAFC' }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           
-          {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color="#0F172A" />
             </TouchableOpacity>
           </View>
 
-          {/* Title & Subtitle */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Paste job description</Text>
             <Text style={styles.subtitle}>Add job description for the role you want to match</Text>
           </View>
 
-          {/* Form */}
           <View style={styles.formContainer}>
             <Text style={styles.inputLabel}>Job Description</Text>
             <View style={styles.inputWrapper}>
@@ -79,7 +76,6 @@ export default function PasteJobDescriptionScreen() {
 
           <View style={styles.spacer} />
 
-          {/* Tip Box */}
           <View style={styles.tipBox}>
             <View style={styles.tipHeader}>
               <Ionicons name="bulb-outline" size={20} color="#0F172A" />
@@ -90,7 +86,6 @@ export default function PasteJobDescriptionScreen() {
             </Text>
           </View>
 
-          {/* Continue Button */}
           <TouchableOpacity 
             style={[styles.button, jobDescription.length === 0 && styles.buttonDisabled]} 
             onPress={handleContinue}
@@ -100,8 +95,8 @@ export default function PasteJobDescriptionScreen() {
           </TouchableOpacity>
 
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

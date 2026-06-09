@@ -5,6 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { saveApplication } from '../services/applicationStorage';
+import { resumeService } from '../services/api/resumeService';
+import { applicationService } from '../services/api/applicationService';
+import { ActivityIndicator } from 'react-native';
 
 export default function ApplyJobScreen() {
   const router = useRouter();
@@ -17,32 +20,44 @@ export default function ApplyJobScreen() {
 
   const [coverLetter, setCoverLetter] = useState('');
   
-  // State for the resume picked from profile setup
   const [resumeFileName, setResumeFileName] = useState("Alex_Joshua_Resume.pdf");
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmitApplication = async () => {
-    // Code the input and submission of the candidate for the use in a recruiters dashboard that would be created later
-    const applicationData = {
-      jobId: jobId as string,
-      jobTitle: title as string,
-      company: company as string,
-      applicantId: 'user-123', // Mock user ID
-      resume: resumeFileName,
-      coverLetter,
-      submittedAt: new Date().toISOString()
-    };
-    
-    console.log("Submitting Application Data to Recruiter Dashboard:", applicationData);
-    
-    // Save to device storage
-    await saveApplication(applicationData);
-    
-    // Check if resume changed and route to success screen with param
-    const resumeChanged = resumeFileName !== "Alex_Joshua_Resume.pdf";
-    router.push({
-      pathname: '/application-success',
-      params: { resumeChanged: resumeChanged ? 'true' : 'false' }
-    });
+    try {
+      setIsLoading(true);
+      
+      const resumes = await resumeService.getMyResumes();
+      const resumeId = resumes.length > 0 ? (resumes[0]._id || resumes[0].id) : 'dummy-resume-id';
+      
+      await applicationService.apply({
+        jobId: jobId as string,
+        resumeId: resumeId as string
+      });
+      
+      const applicationData = {
+        jobId: jobId as string,
+        jobTitle: title as string,
+        company: company as string,
+        applicantId: 'user-123', // Mock user ID
+        resume: resumeFileName,
+        coverLetter,
+        submittedAt: new Date().toISOString()
+      };
+      
+      await saveApplication(applicationData);
+      
+      const resumeChanged = resumeFileName !== "Alex_Joshua_Resume.pdf";
+      router.push({
+        pathname: '/application-success',
+        params: { resumeChanged: resumeChanged ? 'true' : 'false' }
+      });
+    } catch (error: any) {
+      Alert.alert("Application Failed", error?.response?.data?.message || error.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChangeResume = async () => {
@@ -66,7 +81,6 @@ export default function ApplyJobScreen() {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -78,7 +92,6 @@ export default function ApplyJobScreen() {
           <Text style={styles.jobTitle}>{title}</Text>
           <Text style={styles.companyText}>{company} - {location}</Text>
 
-          {/* Resume Section */}
           <Text style={styles.sectionHeader}>Resume</Text>
           <View style={styles.resumeCard}>
             <View style={styles.resumeIconContainer}>
@@ -90,7 +103,6 @@ export default function ApplyJobScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Cover Letter Section */}
           <Text style={styles.sectionHeader}>Cover Letter</Text>
           <View style={styles.coverLetterContainer}>
             <TextInput
@@ -105,13 +117,17 @@ export default function ApplyJobScreen() {
           </View>
         </ScrollView>
 
-        {/* Fixed Submit Button */}
         <View style={styles.footer}>
           <TouchableOpacity 
             style={styles.submitButton}
             onPress={handleSubmitApplication}
+            disabled={isLoading}
           >
-            <Text style={styles.submitButtonText}>Submit Application</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitButtonText}>Submit Application</Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

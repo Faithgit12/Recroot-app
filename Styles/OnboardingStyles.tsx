@@ -54,13 +54,11 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     
-    //soft shadow styling for ios
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
     
-    // soft shadow styling for Android
     elevation: 4,
     marginBottom: height * 0.04, 
   },
@@ -118,7 +116,6 @@ export const styles = StyleSheet.create({
     marginBottom: 32,
   },
 
-  // Styles for individual inactive dot
   dot: {
     width: 8,
     height: 8,
@@ -127,12 +124,10 @@ export const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
 
-  // Styles for the currently active dot
   activeDot: {
     backgroundColor: "#183C6B", 
   },
 
-  // Primary action button (Next / Get Started)
   button: {
     width: "100%",
     backgroundColor: "#183C6B", 
@@ -141,7 +136,6 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     
-    // Soft shadow for the main button
     shadowColor: "#183C6B",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,

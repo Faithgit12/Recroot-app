@@ -25,21 +25,23 @@ export default function AIAnalysisScreen() {
     let isMounted = true;
 
     const runAnalysis = async () => {
-      // Simulate progress updates for UI
-      const timer1 = setTimeout(() => { if(isMounted) { setProgress(25); setCurrentStep(1); } }, 800);
-      const timer2 = setTimeout(() => { if(isMounted) { setProgress(50); setCurrentStep(2); } }, 1600);
-      const timer3 = setTimeout(() => { if(isMounted) { setProgress(75); setCurrentStep(3); } }, 2400);
+      let timer1: NodeJS.Timeout, timer2: NodeJS.Timeout, timer3: NodeJS.Timeout;
+      timer1 = setTimeout(() => { if(isMounted) { setProgress(25); setCurrentStep(1); } }, 800);
+      timer2 = setTimeout(() => { if(isMounted) { setProgress(50); setCurrentStep(2); } }, 1600);
+      timer3 = setTimeout(() => { if(isMounted) { setProgress(75); setCurrentStep(3); } }, 2400);
 
-      // Actual extraction call
       try {
         const details = await extractJobDetails(jobDescription);
         
         if (isMounted) {
+          clearTimeout(timer1);
+          clearTimeout(timer2);
+          clearTimeout(timer3);
+          
           setProgress(100);
           setCurrentStep(4);
           
           setTimeout(() => {
-            // Pass the extracted details to the confirmation screen
             router.replace({
               pathname: '/edit-extracted-details',
               params: {
@@ -51,7 +53,6 @@ export default function AIAnalysisScreen() {
         }
       } catch (error) {
         console.error("Extraction failed", error);
-        // Handle error (e.g. show error message and go back)
       }
 
       return () => {
@@ -68,7 +69,6 @@ export default function AIAnalysisScreen() {
     };
   }, [jobDescription]);
 
-  // SVG dimensions
   const size = 160;
   const strokeWidth = 16;
   const radius = (size - strokeWidth) / 2;
@@ -79,7 +79,6 @@ export default function AIAnalysisScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         
-        {/* Title & Subtitle */}
         <View style={styles.header}>
           <Text style={styles.title}>AI Analysis</Text>
           <Text style={styles.subtitle}>Analyzing Compatibility...</Text>
@@ -88,10 +87,8 @@ export default function AIAnalysisScreen() {
           </Text>
         </View>
 
-        {/* Progress Circle */}
         <View style={styles.progressContainer}>
           <Svg width={size} height={size}>
-            {/* Background Circle */}
             <Circle
               stroke="#E2E8F0"
               fill="none"
@@ -100,7 +97,6 @@ export default function AIAnalysisScreen() {
               r={radius}
               strokeWidth={strokeWidth}
             />
-            {/* Progress Circle */}
             <Circle
               stroke="#183C6B"
               fill="none"
@@ -120,7 +116,6 @@ export default function AIAnalysisScreen() {
           </View>
         </View>
 
-        {/* Steps List */}
         <View style={styles.stepsContainer}>
           {steps.map((step, index) => {
             const isCompleted = currentStep > index;
@@ -153,7 +148,6 @@ export default function AIAnalysisScreen() {
 
         <View style={styles.spacer} />
 
-        {/* Tip Box */}
         <View style={styles.tipBox}>
           <View style={styles.tipHeader}>
             <Ionicons name="bulb-outline" size={20} color="#0F172A" />

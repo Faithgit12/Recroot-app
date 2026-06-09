@@ -5,12 +5,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ExtractedJobDetails, matchResumeToJob } from '../services/aiExtractionService';
-
+import { resumeService } from '../services/api/resumeService';
+import { scoringService } from '../services/api/scoringService';
+import { useMatchStore } from '../store/matchStore';
+import { Alert } from 'react-native';
 export default function JobDetailsExtractedScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -40,20 +45,55 @@ export default function JobDetailsExtractedScreen() {
   const handleContinue = async () => {
     setIsMatching(true);
     try {
-      // Use some mock resume text for now since we don't have the user's resume in context.
-      // In a real app, this would be fetched from applicationStorage or context.
-      const mockResumeText = "Experienced product designer..."; 
+      const resumesData = await resumeService.getMyResumes();
+      const resumesList = Array.isArray(resumesData) ? resumesData : ((resumesData as any).resumes || (resumesData as any).data || []);
       
-      const matchResult = await matchResumeToJob(mockResumeText, details);
+      if (resumesList.length === 0) {
+        Alert.alert("No Resume Found", "Please upload a resume first before calculating a match score.");
+        setIsMatching(false);
+        return;
+      }
+
+      const resumeId = resumesList[0]._id || resumesList[0].id;
       
+      // Call actual backend scoring service
+      const payload = {
+        resumeId: resumeId as string,
+        jobDescription: (jobDescription || confirmedDetails || '') as string
+      };
+      console.log("Sending scoring payload:", JSON.stringify({ resumeId: payload.resumeId, jobDescLength: payload.jobDescription.length }));
+      
+      const scoringResponse = await scoringService.score(payload);
+      console.log("Received scoring response:", JSON.stringify(scoringResponse, null, 2));
+
+      // The backend scoring returns { data: { matchScore: number, feedback: string, matchedSkills: [], missingSkills: [] } }
+      const responseData = scoringResponse.data || (scoringResponse as any);
+      const backendScore = responseData.matchScore ?? 0;
+
+      const matchResult = {
+        overallScore: backendScore,
+        skillsMatch: backendScore, // Backend doesn't provide granular scores, so we mirror the main score
+        qualificationMatch: backendScore,
+        experienceMatch: backendScore,
+        educationMatch: backendScore,
+        overallFit: backendScore,
+        missingSkills: responseData.missingSkills || [],
+        matchedSkills: responseData.matchedSkills || [],
+        feedback: responseData.feedback || '',
+        jobTitle: details.jobTitle
+      };
+
+      useMatchStore.getState().setRecentMatch(matchResult);
+
       router.push({
         pathname: '/match-score',
         params: {
           matchResult: JSON.stringify(matchResult)
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Matching failed", error);
+      Alert.alert("Match Failed", error?.response?.data?.message || error.message || "Could not score resume.");
     } finally {
       setIsMatching(false);
     }
@@ -61,22 +101,24 @@ export default function JobDetailsExtractedScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#0F172A" />
           </TouchableOpacity>
         </View>
 
-        {/* Title & Subtitle */}
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Job Details Extracted</Text>
           <Text style={styles.subtitle}>We have extracted the following information</Text>
         </View>
 
-        {/* Read-only Cards */}
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Job Title</Text>
           <Text style={styles.cardValue}>{details.jobTitle}</Text>
@@ -102,7 +144,6 @@ export default function JobDetailsExtractedScreen() {
           <Text style={styles.cardValue}>{details.location || 'Not Specified'}</Text>
         </View>
 
-        {/* Key Skills Tags */}
         <View style={styles.keySkillsContainer}>
           <Text style={styles.keySkillsTitle}>Key Skills</Text>
           <View style={styles.tagsWrapper}>
@@ -116,7 +157,6 @@ export default function JobDetailsExtractedScreen() {
 
         <View style={styles.spacer} />
 
-        {/* Continue Button */}
         <TouchableOpacity 
           style={[styles.button, isMatching && styles.buttonDisabled]} 
           onPress={handleContinue}
@@ -126,6 +166,7 @@ export default function JobDetailsExtractedScreen() {
         </TouchableOpacity>
 
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

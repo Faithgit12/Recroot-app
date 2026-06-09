@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { styles } from "../Styles/OnboardingStyles";
 
@@ -55,7 +56,11 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    } catch (e) {
+    }
     router.replace("/signup");
   };
 
@@ -92,14 +97,11 @@ export default function OnboardingScreen() {
     return (
       <View style={{ width, alignItems: "center", justifyContent: "center" }}>
         <View style={styles.contentContainer}>
-          {/* 1. Illustration Card */}
           <View style={styles.imageCard}>
             <Image source={item.image} style={styles.image} />
           </View>
 
-          {/* 2. Text Area (Title and Subtitle) */}
           <View style={styles.textContainer}>
-            {/* Title with highlighted words */}
             <Text style={styles.title}>
               {item.titleParts.map((part, index) => (
                 <Text
@@ -111,7 +113,6 @@ export default function OnboardingScreen() {
               ))}
             </Text>
 
-            {/* Description / Subtitle */}
             <Text style={styles.description}>{item.description}</Text>
           </View>
         </View>
@@ -123,14 +124,12 @@ export default function OnboardingScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         
-        {/* Top Header: Skip Button */}
         <View style={styles.headerContainer}>
           <Pressable style={styles.skipButton} onPress={handleFinish}>
             <Text style={styles.skipButtonText}>Skip</Text>
           </Pressable>
         </View>
 
-        {/* Middle Area: FlatList for swipable pages */}
         <FlatList
           ref={flatListRef}
           data={ONBOARDING_DATA}
@@ -144,9 +143,7 @@ export default function OnboardingScreen() {
           style={{ flex: 1 }}
         />
 
-        {/* Bottom Area: Page Indicator Dots & Action Button */}
         <View style={styles.bottomContainer}>
-          {/* Dots Indicator */}
           <View style={styles.dotsContainer}>
             {ONBOARDING_DATA.map((_, index) => (
               <Pressable
@@ -160,7 +157,6 @@ export default function OnboardingScreen() {
             ))}
           </View>
 
-          {/* Next / Get Started Action Button */}
           <Pressable style={styles.button} onPress={handleNext}>
             <Text style={styles.buttonText}>
               {ONBOARDING_DATA[currentIndex].buttonText}

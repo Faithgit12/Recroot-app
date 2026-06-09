@@ -1,63 +1,108 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { useAppStore } from '../../store/appStore';
+import { resumeService } from '../../services/api/resumeService';
+import { interviewService, InterviewSession } from '../../services/api/interviewService';
+import { useMatchStore } from '../../store/matchStore';
 
 export default function InterviewScreen() {
   const router = useRouter();
-  const [selectedMode, setSelectedMode] = useState<string>('AI Interview');
+  const [selectedMode, setSelectedMode] = useState<string>('Combined');
   const [isGenerating, setIsGenerating] = useState(false);
   
+  const recentMatch = useMatchStore(state => state.recentMatch);
+  
+  const [jobRole, setJobRole] = useState(recentMatch?.jobTitle || '');
+  const [jobDescription, setJobDescription] = useState('');
+  
+  const [sessions, setSessions] = useState<InterviewSession[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+
   const overallProgress = useAppStore(state => state.overallProgress);
-  const recentSessions = useAppStore(state => state.recentSessions);
-  const addSession = useAppStore(state => state.addSession);
   const setOverallProgress = useAppStore(state => state.setOverallProgress);
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  const fetchSessions = async () => {
+    try {
+      const data = await interviewService.getInterviews();
+      // Assume API returns an array, optionally sort by newest
+      setSessions(Array.isArray(data) ? data : ((data as any).data || []));
+    } catch (error) {
+      console.error("Failed to fetch interviews", error);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
 
   const modes = [
     {
-      id: 'AI Interview',
-      title: 'AI Interview',
-      subtitle: 'Simulate a real interview with AI',
-      icon: 'chatbubbles-outline'
+      id: 'Combined',
+      title: 'Combined',
+      subtitle: 'Questions based on Resume & Job',
+      icon: 'layers-outline'
     },
     {
-      id: 'Technical',
-      title: 'Technical',
-      subtitle: 'Design, coding & technical Q&A',
-      icon: 'calendar-outline'
-    },
-    {
-      id: 'Behavioural',
-      title: 'Behavioural',
-      subtitle: 'Practice soft skills questions',
+      id: 'Resume Based',
+      title: 'Resume Based',
+      subtitle: 'Questions purely on your experience',
       icon: 'document-text-outline'
+    },
+    {
+      id: 'Job Based',
+      title: 'Job Based',
+      subtitle: 'Questions focused on the specific role',
+      icon: 'business-outline'
     }
   ];
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    // Simulate AI generation delay
-    setTimeout(() => {
-      setIsGenerating(false);
+    
+    try {
+      const payload: any = {};
       
-      // Update global progress by a small percentage, max 100%
-      setOverallProgress(Math.min(overallProgress + 15, 100));
+      // The backend STRICTLY requires a valid resumeId to not throw "resume not found"
+      const resumesData = await resumeService.getMyResumes();
+      const resumes = Array.isArray(resumesData) ? resumesData : ((resumesData as any).data || []);
+      payload.resumeId = resumes.length > 0 ? (resumes[0]._id || resumes[0].id) : undefined;
       
-      // Add to recent sessions
-      addSession({
-        type: selectedMode,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      if (selectedMode === 'Resume Based') {
+        // Focus on Resume by sending generic Job values so the AI only talks about the resume
+        payload.jobRole = "General Professional";
+        payload.jobDescription = "General interview focusing purely on the candidate's past experience, skills, and resume.";
+      } else {
+        // Combined or Job Based
+        payload.jobRole = jobRole.trim() || 'Software Engineer';
+        payload.jobDescription = jobDescription.trim() || 'Seeking an experienced professional with deep knowledge of the domain.';
+      }
+
+      const session = await interviewService.generate(payload);
+
+      setOverallProgress(Math.min(overallProgress + 5, 100));
+      
+      fetchSessions();
+      
+      router.push({
+        pathname: '/report/export',
+        params: {
+          type: 'Interview Prep Report',
+          questions: JSON.stringify(session.questions)
+        }
       });
-      
-      // Navigate to generated screen
-      router.push('/interview/generated');
-    }, 2000);
+    } catch (error: any) {
+      Alert.alert("Generation Failed", error?.response?.data?.message || error.message || "Could not generate interview questions");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  // SVG circular progress setup
   const size = 100;
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -65,19 +110,21 @@ export default function InterviewScreen() {
   const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: '#F8FAFC' }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         
         <Text style={styles.pageTitle}>Practice and ace your interviews</Text>
 
-        {/* Modes Horizontal Scroll */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.modesContainer}>
           {modes.map((mode) => (
             <TouchableOpacity 
@@ -92,7 +139,7 @@ export default function InterviewScreen() {
                 <Ionicons 
                   name={mode.icon as any} 
                   size={24} 
-                  color={selectedMode === mode.id ? '#183C6B' : (mode.id === 'Technical' ? '#EF4444' : '#F59E0B')} 
+                  color={selectedMode === mode.id ? '#183C6B' : '#94A3B8'} 
                 />
               </View>
               <Text style={styles.modeTitle}>{mode.title}</Text>
@@ -109,32 +156,33 @@ export default function InterviewScreen() {
           ))}
         </ScrollView>
 
-        {/* Job Details Static Form */}
-        <View style={styles.jobDetailsContainer}>
-          <View style={styles.jobFieldRow}>
-            <Text style={styles.jobFieldLabel}>Job Title</Text>
-            <Text style={styles.jobFieldValue}>Senior product designer</Text>
-          </View>
-          <View style={styles.jobFieldRow}>
-            <Text style={styles.jobFieldLabel}>Experience</Text>
-            <Text style={styles.jobFieldValue}>2+ years</Text>
-          </View>
-          <View style={styles.jobFieldRow}>
-            <Text style={styles.jobFieldLabel}>Skills</Text>
-            <Text style={styles.jobFieldValue}>Prototyping</Text>
-          </View>
-          <View style={styles.jobFieldRow}>
-            <Text style={styles.jobFieldLabel}>Job Description</Text>
-            <View style={styles.uploadedRow}>
-              <Text style={styles.jobFieldValue}>Uploaded</Text>
-              <Ionicons name="checkmark-circle-outline" size={20} color="#22C55E" style={{ marginLeft: 8 }} />
+        {selectedMode !== 'Resume Based' && (
+          <View style={styles.jobDetailsContainer}>
+            <View style={styles.jobFieldRow}>
+              <Text style={styles.jobFieldLabel}>Job Title</Text>
+              <TextInput 
+                style={styles.jobFieldInput}
+                value={jobRole}
+                onChangeText={setJobRole}
+                placeholder="e.g. Senior Product Designer"
+                placeholderTextColor="#94A3B8"
+              />
+            </View>
+            <View style={[styles.jobFieldRow, { alignItems: 'flex-start' }]}>
+              <Text style={[styles.jobFieldLabel, { marginTop: 8 }]}>Job Description</Text>
+              <TextInput 
+                style={[styles.jobFieldInput, { minHeight: 60, textAlignVertical: 'top' }]}
+                value={jobDescription}
+                onChangeText={setJobDescription}
+                placeholder="Paste job description here..."
+                placeholderTextColor="#94A3B8"
+                multiline
+              />
             </View>
           </View>
-        </View>
+        )}
 
-        {/* Bottom Cards */}
         <View style={styles.bottomCardsContainer}>
-          {/* Progress Card */}
           <View style={styles.progressCard}>
             <Text style={styles.cardTitle}>Your Progress</Text>
             
@@ -163,20 +211,27 @@ export default function InterviewScreen() {
             <Text style={styles.cardSubtitle}>Overall Progress</Text>
           </View>
 
-          {/* Recent Sessions Card */}
           <View style={styles.sessionsCard}>
             <Text style={styles.cardTitle}>Recent Sessions</Text>
             
             <ScrollView showsVerticalScrollIndicator={false} style={styles.sessionsList}>
-              {recentSessions.length === 0 ? (
+              {isLoadingSessions ? (
+                <ActivityIndicator size="small" color="#183C6B" style={{ marginTop: 20 }} />
+              ) : sessions.length === 0 ? (
                 <Text style={styles.emptyText}>No sessions yet</Text>
               ) : (
-                recentSessions.map((session) => (
-                  <View key={session.id} style={styles.sessionRow}>
-                    <Text style={styles.sessionType}>{session.type}</Text>
-                    <Text style={styles.sessionDate}>{session.date}</Text>
-                  </View>
-                ))
+                sessions.slice(0, 10).map((session) => {
+                  const dateStr = session.createdAt 
+                    ? new Date(session.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+                    : 'Recently';
+                  
+                  return (
+                    <View key={session._id || session.id || Math.random().toString()} style={styles.sessionRow}>
+                      <Text style={styles.sessionType} numberOfLines={1}>{session.jobRole || 'Interview'}</Text>
+                      <Text style={styles.sessionDate}>{dateStr}</Text>
+                    </View>
+                  );
+                })
               )}
             </ScrollView>
           </View>
@@ -184,7 +239,6 @@ export default function InterviewScreen() {
 
         <View style={styles.spacer} />
 
-        {/* Generate Button */}
         <TouchableOpacity 
           style={[styles.button, isGenerating && styles.buttonDisabled]} 
           onPress={handleGenerate}
@@ -198,7 +252,8 @@ export default function InterviewScreen() {
         </TouchableOpacity>
 
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -291,6 +346,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#0F172A',
   },
+  jobFieldInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#0F172A',
+    textAlign: 'right',
+    marginLeft: 16,
+  },
   uploadedRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -354,9 +417,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sessionType: {
+    flex: 1,
     fontSize: 12,
     color: '#0F172A',
     fontWeight: '500',
+    marginRight: 8,
   },
   sessionDate: {
     fontSize: 12,
@@ -387,3 +452,64 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+/* 
+================================================================================
+LEGACY DESIGN BACKUP
+================================================================================
+If your team members do not agree with the new separated Resume/Job tabs, 
+you can restore the old design by replacing the current `modes` array and 
+`Job Details Form` with the following code blocks:
+
+--- 1. Replace the current `modes` array with: ---
+
+  const [selectedMode, setSelectedMode] = useState<string>('AI Interview');
+
+  const modes = [
+    {
+      id: 'AI Interview',
+      title: 'AI Interview',
+      subtitle: 'Simulate a real interview with AI',
+      icon: 'chatbubbles-outline'
+    },
+    {
+      id: 'Technical',
+      title: 'Technical',
+      subtitle: 'Design, coding & technical Q&A',
+      icon: 'calendar-outline'
+    },
+    {
+      id: 'Behavioural',
+      title: 'Behavioural',
+      subtitle: 'Practice soft skills questions',
+      icon: 'document-text-outline'
+    }
+  ];
+
+--- 2. Replace the current Job Details Form with: ---
+
+        {/* Job Details Static Form *\/}
+        <View style={styles.jobDetailsContainer}>
+          <View style={styles.jobFieldRow}>
+            <Text style={styles.jobFieldLabel}>Job Title</Text>
+            <Text style={styles.jobFieldValue}>Senior product designer</Text>
+          </View>
+          <View style={styles.jobFieldRow}>
+            <Text style={styles.jobFieldLabel}>Experience</Text>
+            <Text style={styles.jobFieldValue}>2+ years</Text>
+          </View>
+          <View style={styles.jobFieldRow}>
+            <Text style={styles.jobFieldLabel}>Skills</Text>
+            <Text style={styles.jobFieldValue}>Prototyping</Text>
+          </View>
+          <View style={styles.jobFieldRow}>
+            <Text style={styles.jobFieldLabel}>Job Description</Text>
+            <View style={styles.uploadedRow}>
+              <Text style={styles.jobFieldValue}>Uploaded</Text>
+              <Ionicons name="checkmark-circle-outline" size={20} color="#22C55E" style={{ marginLeft: 8 }} />
+            </View>
+          </View>
+        </View>
+
+================================================================================
+*/

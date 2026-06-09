@@ -22,10 +22,8 @@ export default function SettingsScreen() {
   const handleLogout = async () => {
     try {
       setLogoutModalVisible(false);
-      // Remove saved credentials / clear token
       await AsyncStorage.removeItem('savedEmail');
       await AsyncStorage.removeItem('rememberMe');
-      // Navigate to login
       router.replace('/login');
     } catch (e) {
       console.error('Error logging out', e);
@@ -38,7 +36,6 @@ export default function SettingsScreen() {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -47,17 +44,14 @@ export default function SettingsScreen() {
 
         <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
           
-          {/* Illustration Container */}
           <View style={styles.illustrationContainer}>
             <View style={styles.illustrationCircle}>
               <Ionicons name="settings" size={60} color="#3B82F6" />
-              {/* Decorative elements to mock the illustration */}
               <View style={styles.decorativeElement1} />
               <View style={styles.decorativeElement2} />
             </View>
           </View>
 
-          {/* Settings List */}
           <View style={styles.listContainer}>
             {settingsItems.map((item) => (
               <TouchableOpacity 
@@ -75,7 +69,6 @@ export default function SettingsScreen() {
             ))}
           </View>
 
-          {/* Logout Button */}
           <TouchableOpacity 
             style={styles.logoutButton}
             onPress={() => setLogoutModalVisible(true)}
@@ -87,7 +80,6 @@ export default function SettingsScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Logout Confirmation Modal */}
       <Modal
         visible={logoutModalVisible}
         transparent={true}
